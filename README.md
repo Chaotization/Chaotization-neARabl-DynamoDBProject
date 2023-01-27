@@ -1,1 +1,1 @@
-# Chaotization-neARabl-DynamoDBProject
+neARabl-DynamoDBProject
