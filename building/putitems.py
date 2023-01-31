@@ -4,8 +4,7 @@ from building.__init__ import Building
 
 
 def write_To_DB(url, tableName):
-    dynamodb = boto3.resource('dynamodb')
-    table = dynamodb.Table(tableName)
+    table = boto3.resource('dynamodb').Table(tableName)
     with open(url, 'r') as json_file:
         building_infor = json.load(json_file)
         _dict = {'city': None, 'zip': None, 'country': None,

@@ -1,36 +1,25 @@
 import boto3
 import json
+from decimal import Decimal
 from graph.__init__ import Graph
 
 
 def write_To_DB(url, tableName):
-    dynamodb = boto3.resource('dynamodb')
-    table = dynamodb.Table(tableName)
+    table = boto3.resource('dynamodb').Table(tableName)
     with open(url, 'r') as json_file:
-        graph_infor = json.load(json_file)
-        if 'floor_num' in graph_infor:
-            floor_num = graph_infor['floor_num']
-        else:
-            floor_num = graph_infor[2][0]
-
-        list = [['createdAt', 'created_time'], ['transformed_floorplan_location', 'transform_world_location'],
-                ['landmarks', 'landmark_*']]
-        for elem in list[0]:
+        graph_infor = json.load(json_file, parse_float=Decimal)
+        lists = [['created_time', 'createdAt'], ['landmarks', 'landmark_floor001', 'landmark_floor002']]
+        for elem in lists[0]:
             if elem in graph_infor:
+                print(elem)
                 created_time = graph_infor[elem]
             else:
                 created_time = None
-        for elem in list[1]:
+        for elem in lists[1]:
+            print(elem)
             if elem in graph_infor:
-                transform_world_location = graph_infor[elem]
-            else:
-                transform_world_location = []
-        for elem in list[2]:
-            if elem in graph_infor:
-                landmarks = graph_infor[elem]
-            else:
-                landmarks = []
-        graph = Graph(created_time, floor_num, transform_world_location, landmarks)
+                landmark = graph_infor[elem]
+        graph = Graph(graph_infor['_id'], created_time, landmark)
 
     with table.batch_writer() as batch:
         batch.put_item(
@@ -38,15 +27,16 @@ def write_To_DB(url, tableName):
                 'id': graph.id,
                 'type': graph.type,
                 'created_time': graph.created_time,
-                'landmark_floor' + graph.floor_num: {
+                'landmark_floor00' + graph.floor_num: {
                     graph.landmark_id: {
-                        'transform_world_location': graph.transform_world_location,
-                        'id': graph.landmark_id,
-                        'regions': [graph.regions],
-                        'access_level': graph.access_level,
-                        'destination_type': graph.destination_type,
-                        'connection': graph.connection
+                        'transform_world_location': graph.infor.reverse().pop(),
+                        'id': graph.infor.reverse().pop(),
+                        'regions': graph.infor.reverse().pop(),
+                        'access_level': graph.infor.reverse().pop(),
+                        'destination_type': graph.infor.reverse().pop(),
+                        'connection': graph.infor.reverse().pop(),
                     }
+
                 }
             }
         )
